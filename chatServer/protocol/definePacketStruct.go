@@ -61,37 +61,6 @@ func (packet LoginResponsePacket) EncodingPacket(errorCode int16) ([]byte, int16
 
 
 
-//Error Notify패킷 정의
-type ErrorNotifyPacket struct {
-	ErrorCode int16
-}
-
-func (packet ErrorNotifyPacket) EncodingPacket(errorCode int16) ([]byte, int16) {
-	totalPacketSize := public_clientSessionHeaderSize + 2
-	sendBuf := make([]byte,totalPacketSize)
-
-	writer := NetLib.MakeWriter(sendBuf,true)
-	EncodingPacketHeader(&writer,totalPacketSize,PACKET_ID_ERROR_NTF,0)
-	writer.WriteS16(errorCode)
-
-	return sendBuf, totalPacketSize
-}
-
-func (packet *ErrorNotifyPacket) DecodingPacket(bodyData []byte) bool {
-	bodySize := 2
-	if len(bodyData) != bodySize {
-		return false
-	}
-
-	reader := NetLib.MakeReader(bodyData, true)
-	packet.ErrorCode,_ = reader.ReadS16()
-
-	return true
-}
-
-
-
-
 // RoomEnter RequestPacket
 type RoomEnterRequestPacket struct {
 	RoomNumber int32
@@ -220,6 +189,36 @@ func (packet RoomNewUserNotifyPacket) EncodingPacket(userInfoSize int16) ([]byte
 
 
 
+
+//RoomLeaveNotifyPacket
+type RoomLeaveNotifyPacket struct{
+	UserUniqueID uint64
+}
+
+func (packet RoomLeaveNotifyPacket) EncodingPacket() ([]byte, int16){
+	totalPacketSize := public_clientSessionHeaderSize + 8
+	sendBuf := make([]byte,totalPacketSize)
+
+	writer := NetLib.MakeWriter(sendBuf,true)
+	EncodingPacketHeader(&writer,totalPacketSize,PACKET_ID_ROOM_NEW_USER_NTF,0)
+
+	writer.WriteU64(packet.UserUniqueID)
+	return sendBuf, totalPacketSize
+}
+
+func (packet RoomLeaveNotifyPacket) Decoding(bodyData []byte)bool {
+	bodySize := NetLib.Sizeof(reflect.TypeOf(packet))
+	if len(bodyData) != bodySize {
+		return false
+	}
+
+	reader := NetLib.MakeReader(bodyData, true)
+	packet.UserUniqueID,_ = reader.ReadU64()
+	return true
+}
+
+
+
 //TODO: Request패킷 필요여부 확인. 필요하다면 구현하기
 //RoomLeaveResponse Packet
 type RoomLeaveResponsePacket struct{
@@ -242,3 +241,127 @@ func (packet *RoomLeaveResponsePacket) Decoding(bodyData []byte) bool {
 	packet.Result,_ =  reader.ReadS16()
 	return true
 }
+
+
+
+
+//RoomChatRequestPacket
+type RoomChatRequestPacket struct{
+	MsgLength	int16
+	MsgData		[]byte
+}
+
+func (packet RoomChatRequestPacket) EncodingPacket() ([]byte, int16){
+	totalPacketSize := public_clientSessionHeaderSize + 2 + int16(packet.MsgLength)
+	sendBuf := make([]byte,totalPacketSize)
+
+	writer := NetLib.MakeWriter(sendBuf,true)
+	EncodingPacketHeader(&writer,totalPacketSize, PACKET_ID_ROOM_CHAT_REQ,0)
+	writer.WriteS16(packet.MsgLength)
+	writer.WriteBytes(packet.MsgData)
+
+	return sendBuf, totalPacketSize
+}
+
+func (packet *RoomChatRequestPacket) Decoding(bodyData []byte) bool {
+	reader := NetLib.MakeReader(bodyData, true)
+	packet.MsgLength,_ =  reader.ReadS16()
+	packet.MsgData = reader.ReadBytes(int(packet.MsgLength))
+	return true
+}
+
+
+
+
+//RoomRelayRequestPacket
+type RoomRelayRequestPakcet struct {
+	Data []byte
+}
+
+func (packet RoomRelayRequestPakcet) EncodingPacket(size int16) ([]byte, int16){
+	totalPacketSize := public_clientSessionHeaderSize + int16(len(packet.Data))
+	sendBuf := make([]byte,totalPacketSize)
+
+	writer := NetLib.MakeWriter(sendBuf,true)
+	EncodingPacketHeader(&writer,totalPacketSize, PACKET_ID_ROOM_CHAT_REQ,0)
+	writer.WriteBytes(packet.Data)
+
+	return sendBuf, totalPacketSize
+}
+
+func (packet *RoomRelayRequestPakcet) Decoding(bodyData []byte) bool {
+	reader := NetLib.MakeReader(bodyData, true)
+	packet.Data = reader.ReadBytes(len(packet.Data))
+	return true
+}
+
+
+
+
+//RoomRelayNotifyPacket
+type RoomRelayNotifyPacket struct {
+	RoomUserUniqueID	uint64
+	Data			[]byte
+}
+
+func (packet RoomRelayNotifyPacket) EncodingPacket(size int16) ([]byte, int16){
+	totalPacketSize := public_clientSessionHeaderSize + int16(len(packet.Data))
+	sendBuf := make([]byte,totalPacketSize)
+
+	writer := NetLib.MakeWriter(sendBuf,true)
+	EncodingPacketHeader(&writer,totalPacketSize, PACKET_ID_ROOM_RELAY_NTF,0)
+	writer.WriteU64(packet.RoomUserUniqueID)
+	writer.WriteBytes(packet.Data)
+
+	return sendBuf, totalPacketSize
+}
+
+func (packet *RoomRelayNotifyPacket) Decoding(bodyData []byte) bool {
+	reader := NetLib.MakeReader(bodyData, true)
+	packet.RoomUserUniqueID,_ = reader.ReadU64()
+	packet.Data = reader.ReadBytes(len(packet.Data))
+	return true
+}
+
+
+
+
+//Error Notify패킷 정의
+type ErrorNotifyPacket struct {
+	ErrorCode int16
+}
+
+func (packet ErrorNotifyPacket) EncodingPacket(errorCode int16) ([]byte, int16) {
+	totalPacketSize := public_clientSessionHeaderSize + 2
+	sendBuf := make([]byte,totalPacketSize)
+
+	writer := NetLib.MakeWriter(sendBuf,true)
+	EncodingPacketHeader(&writer,totalPacketSize,PACKET_ID_ERROR_NTF,0)
+	writer.WriteS16(errorCode)
+
+	return sendBuf, totalPacketSize
+}
+
+func (packet *ErrorNotifyPacket) DecodingPacket(bodyData []byte) bool {
+	bodySize := 2
+	if len(bodyData) != bodySize {
+		return false
+	}
+
+	reader := NetLib.MakeReader(bodyData, true)
+	packet.ErrorCode,_ = reader.ReadS16()
+
+	return true
+}
+
+
+
+//오류가 발생하면 오류를 알려주는 패킷
+func NotifyErrorPacket(sessionIndex int32, sessionUniqueID uint64, errorCode int16){
+	var packet ErrorNotifyPacket
+	sendBuf,_ := packet.EncodingPacket(errorCode)
+	NetLib.NetLibIPostSendToClient(sessionIndex, sessionUniqueID, sendBuf)
+}
+
+
+
