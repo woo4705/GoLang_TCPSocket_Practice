@@ -27,7 +27,7 @@ type Header struct {
 
 type Packet struct {
 	UserSessionIndex	int32
-	UserSessionUniqueId	uint64
+	UserSessionUniqueID	uint64
 	ID					int16
 	DataSize			int16
 	Data				[]byte
@@ -35,7 +35,7 @@ type Packet struct {
 
 
 func (packet Packet) GetSessionInfo() (int32,uint64){
-	return packet.UserSessionIndex, packet.UserSessionUniqueId
+	return packet.UserSessionIndex, packet.UserSessionUniqueID
 }
 
 var public_clientSessionHeaderSize int16

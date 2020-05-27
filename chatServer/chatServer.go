@@ -3,28 +3,32 @@ package main
 import (
 	"chatServer/connectedSession"
 	"chatServer/protocol"
+	"chatServer/roomPackage"
 	"go.uber.org/zap"
 	NetLib "gohipernetFake"
 	"strconv"
 	"strings"
 )
 
-type configAppServer struct {
+type ConfigAppServer struct {
+	GameName			string
+
 	RoomMaxCount		int32
 	RoomStartNum		int32
 	RoomMaxUserCount	int32
 }
 
 type ChatServer struct {
-	ServerIndex int
-	IP			string
-	Port		int
+	ServerIndex		int
+	IP				string
+	Port			int
 
 	PacketChannel	chan protocol.Packet
+	RoomMgr 		roomPackage.RoomManager
 }
 
 
-func CreateAndStartServer(netConfig NetLib.NetworkConfig, appConfig configAppServer){
+func CreateAndStartServer(netConfig NetLib.NetworkConfig, appConfig ConfigAppServer){
 	NetLib.NTELIB_LOG_INFO("Create Server")
 	var server ChatServer
 

@@ -10,8 +10,8 @@ type RoomConfig struct {
 
 
 type RoomUser struct {
-	netSessionIndex		int32
-	netSessionUniqueID	uint64
+	NetSessionIndex		int32
+	NetSessionUniqueID	uint64
 
 	RoomUniqueID		uint64
 	IDLen				int8
@@ -32,8 +32,8 @@ func (user *RoomUser)Init (userID []byte, uniqueID uint64) {
 
 
 func (user *RoomUser) SetNetworkInfo(sessionIndex int32, sessionUniqueID uint64) {
-	user.netSessionIndex = sessionIndex
-	user.netSessionUniqueID = sessionUniqueID
+	user.NetSessionIndex = sessionIndex
+	user.NetSessionUniqueID = sessionUniqueID
 }
 
 func (user *RoomUser) PacketDataSize() int16 {
@@ -43,6 +43,6 @@ func (user *RoomUser) PacketDataSize() int16 {
 type AddRoomUserInfo struct {
 	userID []byte
 
-	netSessionIndex		int32
-	netSessionUniqueID	uint64
+	NetSessionIndex		int32
+	NetSessionUniqueID	uint64
 }
