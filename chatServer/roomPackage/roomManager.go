@@ -39,7 +39,14 @@ func (roomMgr *RoomManager) Initialize(config RoomConfig) {
 
 
 func (roomMgr *RoomManager) GetAllChannelUserCount() []int16 {
-	return nil
+	maxRoomCount := roomMgr.MaxRoomCount
+
+	for i := int32(0); i<maxRoomCount; i++ {
+		roomMgr.RoomCountList[i] = int16 (roomMgr.GetRoomUserCount(i))
+	}
+
+
+	return roomMgr.RoomCountList
 }
 
 
@@ -60,7 +67,7 @@ func (roomMgr *RoomManager) GetRoomUserCount(roomID int32) int32 {
 
 
 func (roomMgr *RoomManager) PacketProcess(roomNumber int32, packet protocol.Packet){
-	NetLib.NTELIB_LOG_DEBUG("[RoomManager - PacketProcess]", zap.Int16("PacketID",packet.ID))
+	NetLib.NTELIB_LOG_DEBUG("[RoomManager - PacketProcess]", zap.Int16("PacketID", packet.ID))
 	isRoomEnterReq := false
 
 	if roomNumber == -1 && packet.ID == protocol.PACKET_ID_ROOM_ENTER_REQ {
@@ -72,15 +79,21 @@ func (roomMgr *RoomManager) PacketProcess(roomNumber int32, packet protocol.Pack
 		roomNumber = requestPacket.RoomNumber
 	}
 
+
+	//roomNumber정보가 고정으로 들어감
+
 	room := roomMgr.GetRoomByNumber(roomNumber)
+	NetLib.NTELIB_LOG_DEBUG("[RoomManager - PacketProcess]",zap.Int32("roomNumber",roomNumber), zap.Int32("room Struct's number",room.GetNumber()))
+
+
 	if room == nil {
-		protocol.NotifyErrorPacket(packet.UserSessionIndex, packet.UserSessionUniqueID, protocol.ERROR_CODE_USER_NOT_IN_ROOM)
+		protocol.NotifyErrorPacket(packet.UserSessionIndex, packet.UserSessionUniqueID, protocol.ERROR_CODE_ROOM_INVALID_NUMBER )
 		return
 	}
 
 	user := room.GetUser(packet.UserSessionUniqueID)
 	if user == nil && isRoomEnterReq == false {
-		protocol.NotifyErrorPacket(packet.UserSessionIndex, packet.UserSessionUniqueID, protocol.ERROR_CODE_USER_NOT_IN_ROOM)
+		protocol.NotifyErrorPacket(packet.UserSessionIndex, packet.UserSessionUniqueID, protocol.ERROR_CODE_ROOM_NOT_IN_USER)
 		return
 	}
 
@@ -92,6 +105,7 @@ func (roomMgr *RoomManager) PacketProcess(roomNumber int32, packet protocol.Pack
 		}
 
 		result := room.FuncList[i] (user, packet)
+
 		if result != protocol.ERROR_CODE_NONE {
 			NetLib.NTELIB_LOG_DEBUG("[Room - PacketProcess Fail]",
 			zap.Int16("PacketID",packet.ID), zap.Int16("Error", result))

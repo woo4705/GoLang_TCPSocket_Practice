@@ -1,6 +1,7 @@
 package roomPackage
 
 import (
+	"go.uber.org/zap"
 	NetLib "gohipernetFake"
 	"chatServer/protocol"
 	"sync"
@@ -47,7 +48,7 @@ func (room *BaseRoom) GenerateUserUniqueID() uint64 {
 
 
 func (room *BaseRoom) Initialize(index int32, config RoomConfig){
-	room.Number = config.StartRoomNumber
+	room.Number = config.StartRoomNumber + index
 	room.Index = index
 	room.Config = config
 
@@ -68,9 +69,13 @@ func (room *BaseRoom) ISUserCanEnter() bool {
 func (room *BaseRoom) SettingPacketFunction() {
 	maxFunctionListCount := 16
 	room.FuncList = make([]func(*RoomUser, protocol.Packet)int16, 0, maxFunctionListCount)
-	room.FuncPacketIDList = make([]int16, maxFunctionListCount)
+	room.FuncPacketIDList = make([]int16, 0, maxFunctionListCount)
 
-	//TODO: AddFunction 작업하기. 함수호출 구현법 더 살펴보고 이해해보기
+	room.AddPacketFunction(protocol.PACKET_ID_ROOM_ENTER_REQ, room.PacketProcess_EnterUser)
+	room.AddPacketFunction(protocol.PACKET_ID_ROOM_LEAVE_REQ, room.PacketProcess_LeaveUser)
+	room.AddPacketFunction(protocol.PACKET_ID_ROOM_CHAT_REQ, room.PacketProcess_Chat)
+	room.AddPacketFunction(protocol.PACKET_ID_ROOM_RELAY_REQ, room.PacketProcess_Relay)
+
 
 }
 
@@ -106,7 +111,7 @@ func (room *BaseRoom) AddUser(userInfo AddRoomUserInfo) (*RoomUser, int16){
 		return nil, protocol.ERROR_CODE_ENTER_ROOM_USER_FULL
 	}
 
-	if room.GetUser(userInfo.netSessionUniqueID) != nil {
+	if room.GetUser(userInfo.NetSessionUniqueID) != nil {
 		return nil, protocol.ERROR_CODE_ENTER_ROOM_DUPLICATION_USER
 	}
 
@@ -114,10 +119,12 @@ func (room *BaseRoom) AddUser(userInfo AddRoomUserInfo) (*RoomUser, int16){
 
 	user := room.GetUserObject()
 	user.Init(userInfo.userID, room.GenerateUserUniqueID())
-	user.SetNetworkInfo(userInfo.netSessionIndex, userInfo.netSessionUniqueID)
+	user.SetNetworkInfo(userInfo.NetSessionIndex, userInfo.NetSessionUniqueID)
 	user.packetDataSize = user.PacketDataSize()
 
-	room.UserSessionUniqueIDMap[user.netSessionUniqueID] = user
+	room.UserSessionUniqueIDMap[user.NetSessionUniqueID] = user
+
+
 	return user, protocol.ERROR_CODE_NONE
 }
 
@@ -143,7 +150,17 @@ func (room *BaseRoom) RemoveUserObject(user *RoomUser) {
 }
 
 func (room *BaseRoom) GetUser(sessionUniqueID uint64) *RoomUser {
-	if user, ok := room.UserSessionUniqueIDMap[sessionUniqueID]; ok {
+
+	i := 0
+
+	for _, userTmp := range room.UserSessionUniqueIDMap {
+		NetLib.NTELIB_LOG_DEBUG("UserSessionUniqueIDMap",zap.Int("COUNT",i), zap.Uint64("UserSessionID",userTmp.NetSessionUniqueID))
+		i = i+1
+	}
+
+	user, ok := room.UserSessionUniqueIDMap[sessionUniqueID]
+
+	if  ok == true {
 		return user
 	}
 	return nil

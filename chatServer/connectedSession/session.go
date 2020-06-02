@@ -30,7 +30,7 @@ func (session *Session) ClearUserID(){
 
 func (session *Session) Clear(){
 	session.ClearUserID()
-	session.SetRoomNumer(0, -1,0)
+	session.SetRoomNumber(0, -1,0)
 	session.SetConnectTimeSecond(0,0)
 }
 
@@ -79,7 +79,7 @@ func (session *Session) GetConnectTimeSecond() int64{
 
 func (session *Session) SetUser(sessionUserID uint64, userID []byte, currentTimeSecond int64){
 	session.SetUserID(userID)
-	session.SetRoomNumer(sessionUserID, -1,  currentTimeSecond )
+	session.SetRoomNumber(sessionUserID, -1,  currentTimeSecond )
 
 }
 
@@ -104,8 +104,9 @@ func (session *Session) SetRoomEntering(roomNum int32) bool {
 	return true
 }
 
-func (session *Session) SetRoomNumer(sessionUniqueID uint64, roomNum int32, curTimeSec int64) bool {
+func (session *Session) SetRoomNumber(sessionUniqueID uint64, roomNum int32, curTimeSec int64) bool {
 	if roomNum == -1 {
+
 		atomic.StoreInt32(&session.RoomNumber, roomNum)
 		atomic.StoreInt32(&session.RoomNumberOfEntering, roomNum)
 	}
@@ -123,7 +124,7 @@ func (session *Session) SetRoomNumer(sessionUniqueID uint64, roomNum int32, curT
 	return true
 }
 
-func (session *Session) GetRoomNumer() (int32, int32) {
+func (session *Session) GetRoomNumber() (int32, int32) {
 	roomNum := atomic.LoadInt32(&session.RoomNumber)
 	roomNumOfEntering := atomic.LoadInt32(&session.RoomNumberOfEntering)
 

@@ -24,7 +24,7 @@ type ChatServer struct {
 	Port			int
 
 	PacketChannel	chan protocol.Packet
-	RoomMgr 		roomPackage.RoomManager
+	RoomMgr 		*roomPackage.RoomManager
 }
 
 
@@ -44,9 +44,13 @@ func CreateAndStartServer(netConfig NetLib.NetworkConfig, appConfig ConfigAppSer
 
 	server.PacketChannel = make(chan protocol.Packet, 256)
 
-	/*
-	Room packet부분 생성하기
-	 */
+	roomConfig := roomPackage.RoomConfig{
+		appConfig.RoomStartNum,
+		appConfig.RoomMaxCount,
+		appConfig.RoomMaxUserCount,
+	}
+	server.RoomMgr = roomPackage.NewRoomManager(roomConfig)
+
 
 	go server.PacketProcess_goroutine()
 

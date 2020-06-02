@@ -69,7 +69,8 @@ func PeekPacketID(rawData []byte) int16{
 func PeekPacketBody(rawData []byte) (bodySize int16, refBody []byte){
 
 	headerSize := ClientHeaderSize()
-	bodyData := rawData[:headerSize]
+	//totalSize := int16(binary.LittleEndian.Uint16(rawData))
+	bodyData := rawData[headerSize:]
 	bodySize = int16( binary.LittleEndian.Uint16(rawData)) - headerSize
 
 	return bodySize, bodyData

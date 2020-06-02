@@ -1,6 +1,7 @@
 package protocol
 
 import (
+	"go.uber.org/zap"
 	NetLib "gohipernetFake"
 	"reflect"
 )
@@ -79,12 +80,18 @@ func (packet RoomEnterRequestPacket) EncodingPacket() ([]byte, int16) {
 
 func (packet *RoomEnterRequestPacket) DecodingPacket(bodyData []byte) bool{
 	bodySize := 4
+
+	NetLib.NTELIB_LOG_DEBUG("[roomEnterRequestPacket body size]", zap.Int32("bodySize)",int32(len(bodyData))))
+
 	if len(bodyData) != bodySize {
+
 		return false
 	}
 
 	reader := NetLib.MakeReader(bodyData, true)
 	packet.RoomNumber,_ = reader.ReadS32()
+
+	NetLib.NTELIB_LOG_DEBUG("[roomEnterRequestPacket]", zap.Int32("RoomNumber",packet.RoomNumber))
 
 	return true
 }
@@ -104,7 +111,7 @@ func (packet RoomEnterResponsePacket) EncodingPacket() ([]byte, int16){
 	sendBuf := make([]byte,totalPacketSize)
 
 	writer := NetLib.MakeWriter(sendBuf,true)
-	EncodingPacketHeader(&writer,totalPacketSize,PACKET_ID_ROOM_ENTER_REQ,0)
+	EncodingPacketHeader(&writer,totalPacketSize,PACKET_ID_ROOM_ENTER_RES,0)
 	writer.WriteS16(packet.Result)
 	writer.WriteS32(packet.RoomNumber)
 	writer.WriteU64(packet.RoomUserUniqueID)
@@ -200,7 +207,7 @@ func (packet RoomLeaveUserNotifyPacket) EncodingPacket() ([]byte, int16){
 	sendBuf := make([]byte,totalPacketSize)
 
 	writer := NetLib.MakeWriter(sendBuf,true)
-	EncodingPacketHeader(&writer,totalPacketSize,PACKET_ID_ROOM_NEW_USER_NTF,0)
+	EncodingPacketHeader(&writer,totalPacketSize,PACKET_ID_ROOM_LEAVE_USER_NTF,0)
 
 	writer.WriteU64(packet.UserUniqueID)
 	return sendBuf, totalPacketSize
@@ -219,7 +226,6 @@ func (packet RoomLeaveUserNotifyPacket) Decoding(bodyData []byte)bool {
 
 
 
-//TODO: Request패킷 필요여부 확인. 필요하다면 구현하기
 //RoomLeaveResponse Packet
 type RoomLeaveUserResponsePacket struct{
 	Result int16
@@ -281,7 +287,7 @@ type RoomChatNotifyPacket struct {
 }
 
 func (packet RoomChatNotifyPacket) EncodingPacket() ([]byte, int16){
-	totalPacketSize := public_clientSessionHeaderSize + int16(NetLib.Sizeof(reflect.TypeOf(packet)) )
+	totalPacketSize := public_clientSessionHeaderSize + 8 + 2 + packet.MsgLen
 	sendBuf := make([]byte, totalPacketSize)
 	writer := NetLib.MakeWriter(sendBuf, true)
 	EncodingPacketHeader(&writer, totalPacketSize, PACKET_ID_ROOM_CHAT_NOTIFY, 0)

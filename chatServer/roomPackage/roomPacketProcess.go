@@ -24,6 +24,7 @@ func (room *BaseRoom) PacketProcess_Relay(user *RoomUser, packet protocol.Packet
 
 
 func (room *BaseRoom) PacketProcess_EnterUser(inValidUser *RoomUser, packet protocol.Packet) int16 {
+
 	curTime := NetLib.NetLib_GetCurrnetUnixTime()
 	sessionIndex := packet.UserSessionIndex
 	sessionUniqueID := packet.UserSessionUniqueID
@@ -52,7 +53,11 @@ func (room *BaseRoom) PacketProcess_EnterUser(inValidUser *RoomUser, packet prot
 		return addResult
 	}
 
-	if connectedSession.SetRoomNumber(sessionIndex, sessionUniqueID, room.GetNumber(), curTime) == false {
+
+	NetLib.NTELIB_LOG_DEBUG("[Room.PacketProcess EnterUser] - requestPacket.RoomNumber:", zap.Int32("roomNumPacket",requestPacket.RoomNumber ))
+	NetLib.NTELIB_LOG_DEBUG("[Room.PacketProcess EnterUser] - room.GetNumber():", zap.Int32("roomNumGetFunc", room.GetNumber() ))
+
+	if connectedSession.SetRoomNumber(sessionIndex, sessionUniqueID, requestPacket.RoomNumber, curTime) == false {
 		SendRoomEnterResult(sessionIndex, sessionUniqueID, 0, 0, protocol.ERROR_CODE_ENTER_ROOM_INVALID_SESSION_STATE)
 		return protocol.ERROR_CODE_ENTER_ROOM_INVALID_SESSION_STATE
 	}
@@ -192,7 +197,7 @@ func (room *BaseRoom) PacketProcess_Chat(user *RoomUser, packet protocol.Packet)
 	SendRoomChatResult(sessionIndex, sessionUniqueID, protocol.ERROR_CODE_NONE)
 
 	NetLib.NTELIB_LOG_DEBUG("Channel Chat Notify Function", zap.String("Sender", string(user.ID[:])),
-		zap.String("Message", string(chatPacket.MsgData) ))
+		zap.Int("MsgLen",len(chatPacket.MsgData)), zap.String("Message", string(chatPacket.MsgData) ))
 
 
 	return protocol.ERROR_CODE_NONE

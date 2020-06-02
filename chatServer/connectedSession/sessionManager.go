@@ -140,7 +140,7 @@ func SetRoomNumber(sessionIndex int32, sessionUniqueID uint64, roomNum int32, cu
 		return false
 	}
 
-	return global_sessionManager.SessionList[sessionIndex].SetRoomNumer(sessionUniqueID, roomNum, curTimeSec)
+	return global_sessionManager.SessionList[sessionIndex].SetRoomNumber(sessionUniqueID, roomNum, curTimeSec)
 }
 
 func GetRoomNumber(sessionIndex int32) (int32, int32){
@@ -148,5 +148,5 @@ func GetRoomNumber(sessionIndex int32) (int32, int32){
 		NetLib.NTELIB_LOG_ERROR("Invalid sessionIndex", zap.Int32("sessionIndex",sessionIndex))
 		return -1,-1
 	}
-	return global_sessionManager.SessionList[sessionIndex].GetRoomNumer()
+	return global_sessionManager.SessionList[sessionIndex].GetRoomNumber()
 }

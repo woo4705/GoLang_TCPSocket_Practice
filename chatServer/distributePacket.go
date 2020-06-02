@@ -50,17 +50,20 @@ func (server *ChatServer) PacketProcess_goroutine_Impl() bool {
 	for{
 		packet := <- server.PacketChannel
 		sessionIndex := packet.UserSessionIndex
-		sessionUniqieID := packet.UserSessionUniqueID
+		sessionUniqueID := packet.UserSessionUniqueID
 		bodySize := packet.DataSize
 		bodyData := packet.Data
 
 		if packet.ID == protocol.PACKET_ID_LOGIN_REQ {
-			ProcessPacketLogin(sessionIndex, sessionUniqieID, bodySize, bodyData)
+			ProcessPacketLogin(sessionIndex, sessionUniqueID, bodySize, bodyData)
 		}else if packet.ID == protocol.PACKET_ID_SESSION_CLOSE_SYS {
-			ProcessPacketSesssionClosed(server, sessionIndex, sessionUniqieID)
+			ProcessPacketSesssionClosed(server, sessionIndex, sessionUniqueID)
 		}else {
 			roomNumber,_ := connectedSession.GetRoomNumber(sessionIndex)
 			server.RoomMgr.PacketProcess(roomNumber, packet)
+
+			//위에서 connectedSession에서 해당 세션이 연결된 방의 번호를 불러온다.
+
 		}
 	}
 
@@ -71,6 +74,9 @@ func (server *ChatServer) PacketProcess_goroutine_Impl() bool {
 
 func ProcessPacketLogin(sessionIndex int32, sessionUniqueID uint64, bodySize int16, bodyData []byte)  {
 	var reqPacket protocol.LoginRequestPacket
+
+	NetLib.NTELIB_LOG_DEBUG("Process Login Packet");
+
 
 	if (&reqPacket).DecodingPacket(bodyData) == false {
 		SendLoginResult(sessionIndex, sessionUniqueID, protocol.ERROR_CODE_PACKET_DECODING_FAIL)
